@@ -7,7 +7,7 @@ public class ShortenRequest {
     @NotBlank(message = "url is required")
     private String url;
 
-    @Pattern(regexp = "^[A-Za-z0-9_-]{3,30}$", message = "custom ShortUrl must match ^[A-Za-z0-9_-]{3,30}$")
+    @Pattern(regexp = "^[A-Za-z0-9_-]{4,10}$", message = "custom ShortUrl must match ^[A-Za-z0-9_-]{4,10}$")
     private String customShortUrl;
 
     public String getUrl() {
