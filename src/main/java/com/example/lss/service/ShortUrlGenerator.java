@@ -1,6 +1,7 @@
 package com.example.lss.service;
 
 import com.example.lss.repo.UrlMappingRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -11,21 +12,28 @@ import java.util.Set;
 public class ShortUrlGenerator {
     private static final String VALID_CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-";
     private static final Set<String> RESERVED = Set.of("api", "h2", "actuator");
-    private static final int INITIAL_LEN = 4;
-    private static final int MAX_LEN = 10;
-    private static final int MAX_ATTEMPTS_PER_LEN = 5;
+    private int initialLen;
+    private int maxLen;
+    private int attemptsPerLen;
 
     private final SecureRandom random = new SecureRandom();
     private final UrlMappingRepository repo;
 
-    public ShortUrlGenerator(UrlMappingRepository repo) {
+    public ShortUrlGenerator(UrlMappingRepository repo,
+                             @Value("${app.shortUrl.initial-len:4}") int initialLen,
+                             @Value("${app.shortUrl.max-len:10}") int maxLen,
+                             @Value("${app.shortUrl.attempts-per-len:5}") int attemptsPerLen) {
+
+        this.initialLen = initialLen;
+        this.maxLen = maxLen;
+        this.attemptsPerLen = attemptsPerLen;
         this.repo = repo;
     }
 
     public String next() {
-        int len = INITIAL_LEN;
-        while (len <= MAX_LEN) {
-            for (int attempt = 0; attempt < MAX_ATTEMPTS_PER_LEN; attempt++) {
+        int len = initialLen;
+        while (len <= maxLen) {
+            for (int attempt = 0; attempt < attemptsPerLen; attempt++) {
                 String candidate = randomString(len);
                 if (isUsable(candidate)) return candidate;
             }
@@ -38,8 +46,8 @@ public class ShortUrlGenerator {
         if (shortUrl == null || shortUrl.isBlank())
             throw new IllegalArgumentException("Custom short url must not be blank");
 
-        if (!shortUrl.matches("^[A-Za-z0-9_-]{3,30}$"))
-            throw new IllegalArgumentException("Custom code must match ^[A-Za-z0-9_-]{3,30}$");
+        if (!shortUrl.matches("^[A-Za-z0-9_-]{"+initialLen+","+maxLen+"}$"))
+            throw new IllegalArgumentException("Custom code must match ^[A-Za-z0-9_-]{"+initialLen+","+maxLen+"}$");
 
         String lower = shortUrl.toLowerCase(Locale.ROOT);
         if (RESERVED.contains(lower))

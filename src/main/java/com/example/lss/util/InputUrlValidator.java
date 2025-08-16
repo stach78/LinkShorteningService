@@ -25,10 +25,13 @@ public class InputUrlValidator {
             throw new IllegalArgumentException("URL cannot be empty");
         }
         String trimmed = inputUrl.trim();
-        URI uri = parse(inputUrl);
+        URI uri = parse(trimmed);
         String scheme = uri.getScheme();
+        if(scheme != null){
+            scheme = scheme.toLowerCase();
+        }
         if (!ALLOWED_PROTOCOLS.contains(scheme)) {
-            throw new IllegalArgumentException("Only http/https URLs are allowed");
+            throw new IllegalArgumentException("Only http/https URLs are allowed, not "+scheme);
         }
 
         String host = Optional.ofNullable(uri.getHost())
@@ -52,10 +55,13 @@ public class InputUrlValidator {
         try {
             URI uri = new URI(input);
             String scheme = uri.getScheme();
+            if (scheme != null) {
+                scheme = scheme.toLowerCase();
+            }
             if (scheme == null) {
                 return new URI("http://" + input);
             } else if (!scheme.equals("http") && !scheme.equals("https")) { //disallow e. g. ftp, javascript
-                throw new IllegalArgumentException("Only http/https URLs are allowed");
+                throw new IllegalArgumentException("Only http/https URLs are allowed, not "+scheme);
             }
 
             return uri;

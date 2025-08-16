@@ -66,7 +66,7 @@ public class LinkShorteningService {
     @Transactional
     public UrlMapping resolve(String shortUrl) {
         UrlMapping m = repo.findByShortUrl(shortUrl)
-                .orElseThrow(() -> new NotFoundException("Not found"));
+                .orElseThrow(() -> new NotFoundException("Provided short url not found"));
 
         repo.incrementClickCount(m.getId(), Instant.now());
         return m;
