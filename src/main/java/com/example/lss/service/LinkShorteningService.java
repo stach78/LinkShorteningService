@@ -72,6 +72,12 @@ public class LinkShorteningService {
         return m;
     }
 
+    @Transactional(readOnly = true)
+    public UrlMapping getMetadata(String shortUrl) {
+        return repo.findByShortUrl(shortUrl)
+                .orElseThrow(() -> new NotFoundException("Provided short url not found"));
+    }
+
     public static class NotFoundException extends RuntimeException {
         public NotFoundException(String msg) { super(msg); }
     }
