@@ -18,7 +18,7 @@ public class UserLinksController {
     public UserLinksController(UrlMappingRepository repo) { this.repo = repo; }
 
     @GetMapping
-    public ResponseEntity<Page<LinkDetailsResponse>> myLinks(
+    public ResponseEntity<Page<LinkDetailsResponse>> userLinks(
             @AuthenticationPrincipal UserDetails principal,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {

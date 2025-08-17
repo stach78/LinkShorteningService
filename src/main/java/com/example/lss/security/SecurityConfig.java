@@ -24,7 +24,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
 
                 // authenticated user endpoints
-                .requestMatchers(HttpMethod.DELETE, "/api/users/me").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/users/delete_user").authenticated()
                 .requestMatchers("/api/me/**", "/api/links/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/shorten").authenticated()
                 .requestMatchers(HttpMethod.GET, "/{code:[A-Za-z0-9._-]+}").authenticated()
