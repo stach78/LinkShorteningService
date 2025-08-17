@@ -22,12 +22,12 @@ public class SecurityConfig {
                 // public
                 .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
                 .requestMatchers(HttpMethod.GET, "/actuator/health").permitAll()
+                .requestMatchers(HttpMethod.GET, "/{code:[A-Za-z0-9._-]+}").permitAll()
 
                 // authenticated user endpoints
                 .requestMatchers(HttpMethod.DELETE, "/api/users/delete_user").authenticated()
                 .requestMatchers("/api/me/**", "/api/links/**").authenticated()
                 .requestMatchers(HttpMethod.POST, "/shorten").authenticated()
-                .requestMatchers(HttpMethod.GET, "/{code:[A-Za-z0-9._-]+}").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/metrics/**").authenticated()
 
                 .anyRequest().permitAll()
