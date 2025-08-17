@@ -28,29 +28,6 @@ public class LinkApiController {
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
-    @GetMapping("/api/links/{shortUrl}")
-    public ResponseEntity<?> getLink(@PathVariable String shortUrl) {
-        return repo.findByShortUrl(shortUrl)
-                .<ResponseEntity<?>>map(m -> ResponseEntity.ok(new LinkDetails(m)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDto("Not found")));
-    }
-
-    static class LinkDetails {
-        public final String code;
-        public final String original_url;
-        public final long click_count;
-        public final java.time.Instant created_at;
-        public final java.time.Instant last_accessed_at;
-
-        LinkDetails(UrlMapping m) {
-            this.code = m.getShortUrl();
-            this.original_url = m.getOriginalUrl();
-            this.click_count = m.getClickCount();
-            this.created_at = m.getCreateDate();
-            this.last_accessed_at = m.getLastAccessed();
-        }
-    }
-
     static class ErrorDto {
         public final String error;
         ErrorDto(String e) { this.error = e; }
