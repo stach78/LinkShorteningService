@@ -5,7 +5,8 @@
    Git
 
 ## 1. Clone repository
-   //here will be an exact command
+git clone https://github.com/stach78/LinkShorteningService.git
+cd LinkShorteningService
 
 ## 2. run unit tests:
    ./mvnw test
@@ -58,3 +59,10 @@ curl -s -X DELETE http://localhost:8080/api/users/delete_user -H 'Content-Type: 
 API documentation can be accessed by starting the application and navigating to:
 http://localhost:8080/swagger-ui/index.html
 http://localhost:8080/v3/api-docs
+
+# IV. Libraries used
+Spring Boot
+
+H2 database
+
+springdoc
