@@ -3,7 +3,9 @@ package com.example.lss.service;
 import com.example.lss.dto.ShortenRequest;
 import com.example.lss.dto.ShortenResponse;
 import com.example.lss.entity.UrlMapping;
+import com.example.lss.entity.UserAccount;
 import com.example.lss.repo.UrlMappingRepository;
+import com.example.lss.repo.UserAccountRepository;
 import com.example.lss.util.InputUrlValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,18 +26,30 @@ class LinkShorteningServiceTest {
     private static final String BASE_URL = "http://localhost";
 
     @Mock UrlMappingRepository repo;
+    @Mock UserAccountRepository userRepo;
     @Mock ShortUrlGenerator shortUrlGenerator;
     @Mock InputUrlValidator urlValidator;
 
     LinkShorteningService service;
+    UserAccount mockUser;
+    String mockUserName ="mock";
 
     @BeforeEach
     void setUp() {
-        service = new LinkShorteningService(repo, shortUrlGenerator, urlValidator, BASE_URL);
+        service = new LinkShorteningService(repo, shortUrlGenerator, urlValidator, userRepo, BASE_URL);
+    }
+
+    private void stubExistingUser(){
+        mockUser = new UserAccount();
+        mockUser.setId(123L);
+        mockUser.setUsername(mockUserName);
+        mockUser.setPasswordHash("{noop}x");
+        when(userRepo.findByUsername(mockUserName)).thenReturn(Optional.of(mockUser));
     }
 
     @Test
     void createShortLink_generated_success() {
+        stubExistingUser();
         ShortenRequest req = new ShortenRequest();
         req.setUrl("https://Example.com/Page");
         when(urlValidator.validate("https://Example.com/Page"))
@@ -46,7 +60,7 @@ class LinkShorteningServiceTest {
         when(repo.save(saved.capture())).thenAnswer(inv -> inv.getArgument(0));
 
         // when
-        ShortenResponse resp = service.createShortLink(req);
+        ShortenResponse resp = service.createShortLink(req, mockUserName);
 
         // then
         assertEquals(BASE_URL + "/abc123", resp.getShortenedUrl());
@@ -61,6 +75,7 @@ class LinkShorteningServiceTest {
     @Test
     void createShortLink_custom_success() {
         // given
+        stubExistingUser();
         ShortenRequest req = new ShortenRequest();
         req.setUrl("https://example.com");
         req.setCustomShortUrl("my-code");
@@ -71,7 +86,7 @@ class LinkShorteningServiceTest {
         when(repo.save(any(UrlMapping.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // when
-        ShortenResponse resp = service.createShortLink(req);
+        ShortenResponse resp = service.createShortLink(req, mockUserName);
 
         // then
         assertEquals("my-code", customCap.getValue());
@@ -89,6 +104,7 @@ class LinkShorteningServiceTest {
     @Test
     void createShortLink_custom_conflict_throwsIllegalArgument() {
         // given
+        stubExistingUser();
         ShortenRequest req = new ShortenRequest();
         req.setUrl("https://example.com");
         req.setCustomShortUrl("taken");
@@ -100,7 +116,7 @@ class LinkShorteningServiceTest {
 
         // when / then
         IllegalArgumentException ex =
-                assertThrows(IllegalArgumentException.class, () -> service.createShortLink(req));
+                assertThrows(IllegalArgumentException.class, () -> service.createShortLink(req, mockUserName));
         assertTrue(ex.getMessage().toLowerCase().contains("custom"));
         verify(shortUrlGenerator, never()).next();
     }
@@ -108,6 +124,7 @@ class LinkShorteningServiceTest {
     @Test
     void createShortLink_generated_conflict_retriesOnce() {
         // given
+        stubExistingUser();
         ShortenRequest req = new ShortenRequest();
         req.setUrl("https://example.com");
         when(urlValidator.validate("https://example.com")).thenReturn("https://example.com");
@@ -119,7 +136,7 @@ class LinkShorteningServiceTest {
                 .thenAnswer(inv -> inv.getArgument(0));
 
         // when
-        ShortenResponse resp = service.createShortLink(req);
+        ShortenResponse resp = service.createShortLink(req, mockUserName);
 
         // then
         assertEquals(BASE_URL + "/ok456", resp.getShortenedUrl());
@@ -135,6 +152,7 @@ class LinkShorteningServiceTest {
     @Test
     void createShortLink_blankCustomFallsBackToGenerated() {
         // given
+        stubExistingUser();
         ShortenRequest req = new ShortenRequest();
         req.setUrl("https://example.com");
         req.setCustomShortUrl("   "); // blank → should be treated as not custom
@@ -143,7 +161,7 @@ class LinkShorteningServiceTest {
         when(repo.save(any(UrlMapping.class))).thenAnswer(inv -> inv.getArgument(0));
 
         // when
-        ShortenResponse resp = service.createShortLink(req);
+        ShortenResponse resp = service.createShortLink(req, mockUserName);
 
         // then
         assertEquals(BASE_URL + "/abc999", resp.getShortenedUrl());
@@ -174,5 +192,16 @@ class LinkShorteningServiceTest {
         when(repo.findByShortUrl("xyz")).thenReturn(Optional.empty());
         assertThrows(LinkShorteningService.NotFoundException.class, () -> service.resolve("xyz"));
         verify(repo, never()).incrementClickCount(anyLong(), any());
+    }
+
+    @Test
+    void createShortLink_no_user() {
+        ShortenRequest req = new ShortenRequest();
+        req.setUrl("https://Example.com/Page");
+        when(urlValidator.validate("https://Example.com/Page"))
+                .thenReturn("https://example.com/Page");
+        when(shortUrlGenerator.next()).thenReturn("abc123");
+
+        assertThrows(java.lang.IllegalStateException.class, () -> service.createShortLink(req, mockUserName));
     }
 }

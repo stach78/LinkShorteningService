@@ -4,6 +4,7 @@ import com.example.lss.dto.ShortenRequest;
 import com.example.lss.dto.ShortenResponse;
 import com.example.lss.entity.UrlMapping;
 import com.example.lss.repo.UrlMappingRepository;
+import com.example.lss.repo.UserAccountRepository;
 import com.example.lss.util.InputUrlValidator;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -16,6 +17,7 @@ import java.time.Instant;
 public class LinkShorteningService {
 
     private final UrlMappingRepository repo;
+    private final UserAccountRepository userRepo;
     private final ShortUrlGenerator shortUrlGenerator;
     private final InputUrlValidator urlValidator;
     private final String baseUrl;
@@ -23,15 +25,17 @@ public class LinkShorteningService {
     public LinkShorteningService(UrlMappingRepository repo,
                                  ShortUrlGenerator shortUrlGenerator,
                                  InputUrlValidator urlValidator,
+                                 UserAccountRepository userRepo,
                                  @Value("${app.base-url:http://localhost:8080}") String baseUrl) {
         this.repo = repo;
         this.shortUrlGenerator = shortUrlGenerator;
         this.urlValidator = urlValidator;
+        this.userRepo = userRepo;
         this.baseUrl = baseUrl;
     }
 
     @Transactional
-    public ShortenResponse createShortLink(ShortenRequest req) {
+    public ShortenResponse createShortLink(ShortenRequest req, String ownerUsername) {
         String validated = urlValidator.validate(req.getUrl());
 
         String shortUrl;
@@ -47,11 +51,14 @@ public class LinkShorteningService {
         entity.setOriginalUrl(validated);
         entity.setShortUrl(shortUrl);
         entity.setCustom(custom);
+        var owner = userRepo.findByUsername(ownerUsername)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found"));
+        entity.setOwner(owner);
         try {
             repo.save(entity);
         } catch (DataIntegrityViolationException dup) {
             if (custom) {
-                throw new IllegalArgumentException("Custom code already taken");
+                throw new IllegalArgumentException("Custom shortUrl already taken");
             }
             String retry = shortUrlGenerator.next();
             entity.setShortUrl(retry);

@@ -11,6 +11,17 @@ public class UrlMapping {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private UserAccount owner;
+
+    public UserAccount getOwner() {
+        return owner;
+    }
+    public void setOwner(UserAccount owner) {
+        this.owner = owner;
+    }
+
     @Column(name="short_url", length=32, nullable=false, unique=true)
     private String shortUrl;
 
@@ -22,9 +33,6 @@ public class UrlMapping {
 
     @Column(name="last_accessed")
     private Instant lastAccessed;
-
-    @Column(name="owner_id")
-    private String ownerId;
 
     @Column(name="is_custom", nullable = false)
     private boolean custom;
@@ -81,14 +89,6 @@ public class UrlMapping {
 
     public void setLastAccessed(Instant lastAccessed) {
         this.lastAccessed = lastAccessed;
-    }
-
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    public void setOwnerId(String ownerId) {
-        this.ownerId = ownerId;
     }
 
     public boolean isCustom() {

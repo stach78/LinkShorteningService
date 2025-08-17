@@ -7,6 +7,7 @@ import com.example.lss.service.LinkShorteningService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,8 +22,9 @@ public class LinkApiController {
     }
 
     @PostMapping("/shorten")
-    public ResponseEntity<ShortenResponse> shorten(@RequestBody @Valid ShortenRequest req) {
-        ShortenResponse resp = linkShorteningService.createShortLink(req);
+    public ResponseEntity<ShortenResponse> shorten(@RequestBody @Valid ShortenRequest req,
+                                                   @AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails principal) {
+        ShortenResponse resp = linkShorteningService.createShortLink(req, principal.getUsername());
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
